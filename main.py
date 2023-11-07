@@ -10,10 +10,10 @@ MINIMIZATION = -1
 # 1 2 0 0 0
 # 1 5 -1 0 0
 # 6 -1 0 -1 0
-# 1 1 0 0 -1
+# 1 1 0 0 1
 # 5 0 5
 # 0.00001
-# 2 2 7 10 -1
+# 2 2 7 10 1
 
 def ask_initial_solution(A, b):
     while True:
