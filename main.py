@@ -151,7 +151,7 @@ def simplex_iteration(A_nb, A_b, C_nb, C_b, b, problem_type, basic_var_nums, non
 
     # calculate ratios to determine new exiting (leaving) variable
     ratios = np.divide(Xb, newA)
-    exitingVar = np.argmin(ratios[ratios > 0])
+    exitingVar = [i for i, el in enumerate(ratios) if el == min(ratios[ratios > 0])][0]
     ttrtrtrt = C_b @ Xb
     # swap entering and exiting variables into following matrices
     # var., what was non-basic before comes basic
@@ -206,8 +206,6 @@ def main():
             minmax = 1
         A_for_simplex = A[:, :variables - constraints]
         c_for_simplex = c[:variables - constraints]
-        print(A_for_simplex)
-        print(c_for_simplex)
         C_b, Xb, basic_var_nums, non_basic_var_nums, decision_vector = simplex(c_for_simplex,
                                                                                A_for_simplex,
                                                                                b,
@@ -252,15 +250,15 @@ initial: [0.5, 3.5, 1, 2]
 '''
 TEST INPUT COPY:
 1
-6
+5
 3
-1 5 3 0 0 0
-1 12 5 1 0 0
-7 9 2  0 1 0
-9 1 7  0 0 1
-45 26 12
+3 2 0 0 0
+2 1 1 0 0
+2 3 0 1 0
+3 1 0 0 1
+18 42 24
 0.00001
-0.5 0.5 0.5 36 17 3.5
+1 1 15 37 20
 '''
 
 if __name__ == '__main__':
