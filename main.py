@@ -4,7 +4,17 @@ MAXIMIZATION = 1
 MINIMIZATION = -1
 
 
-# for debug purposes
+# 1
+# 5
+# 3
+# 1 2 0 0 0
+# 1 5 -1 0 0
+# 6 -1 0 -1 0
+# 1 1 0 0 -1
+# 5 0 5
+# 0.00001
+# 2 2 7 10 -1
+
 def ask_initial_solution(A, b):
     while True:
         print("Please, enter initial solution inside feasible space: ", end="")
@@ -12,7 +22,12 @@ def ask_initial_solution(A, b):
         solution = np.array(solution)
         answer = A @ solution
         if np.array_equal(answer, b):
-            return solution
+            for i in solution[-A.shape[0]:]:
+                print(i)
+                if i <= 0:
+                    break
+            else:
+                return solution
         print("Sorry, this solution is wrong :(\nTry again!")
 
 
@@ -79,27 +94,41 @@ def interior(c, A, x, alpha, problem_type, epsilon):
     solution = x
     print(f"Interior Point Algorithm for alpha={alpha}\n")
     iteration_counter = 0
+    min_sol = x
+    min_sol_ch = 100 ** 100
+    ind_last = 0
     while True:
         print(f"Iteration {iteration_counter}: {solution}")
         solution_prev = solution
         try:
             solution = iteration(c, A, solution_prev, alpha, problem_type)
         except ArithmeticError as e:
-            print(f"No more iteration can done, because of {e}")
+            print(f"\033[31mNo more iteration can done, because of ({e})")
+            print("Method is not applicable!")
+            exit(1)
+        except np.linalg.LinAlgError as e:
+            print(f"\033[31mThe epsilon value of stopping criterion is too small, increase it, please 🥺 ({e})"
+                  f"We have memorized last possible solution before solution exploded:")
+            solution = min_sol
+            iteration_counter = ind_last
             break
-
         if np.linalg.norm(solution - solution_prev) < epsilon:
-            print("Stopped by stopping criterion")
+            print("\033[32mStopped by stopping criterion")
             break
+        if np.linalg.norm(solution - solution_prev) < min_sol_ch:
+            min_sol_ch = np.linalg.norm(solution - solution_prev)
+            min_sol = solution
+            ind_last = iteration_counter
         iteration_counter += 1
 
-    print(f"Last iteration ({iteration_counter + 1}):\n {solution}")
+    print(f"\033[0mLast iteration ({iteration_counter + 1}):\n {solution}")
     print(f"Optimal value of objective function: {c @ solution}")
     print("--------------------------------------------------\n\n")
     return [solution, c @ solution]
 
 
 np.seterr(all="ignore")
+
 
 def simplex_iteration(A_nb, A_b, C_nb, C_b, b, problem_type, basic_var_nums, non_basic_var_nums):
     """
@@ -204,34 +233,42 @@ def main():
         minmax = 0
         if problem_type == MAXIMIZATION:
             minmax = 1
-        A_for_simplex = A[:, :variables - constraints]
-        c_for_simplex = c[:variables - constraints]
-        C_b, Xb, basic_var_nums, non_basic_var_nums, decision_vector = simplex(c_for_simplex,
+        flag = True
+        for i in A[:, variables - constraints:]:
+            for j in i:
+                if j < 0:
+                    flag = False
+        if flag:
+            A_for_simplex = A[:, :variables - constraints]
+            c_for_simplex = c[:variables - constraints]
+            C_b, Xb, basic_var_nums, non_basic_var_nums, decision_vector = simplex(c_for_simplex,
                                                                                A_for_simplex,
                                                                                b,
                                                                                minmax)
-        print(f"Basic variables' coefficients: {C_b}")
-        print(f"Basic variable numbers: {basic_var_nums}")
-        print(f"Basic variable values: {Xb}")
-        print(f"Non-basic variable numbers: {non_basic_var_nums}")
-        print(f"Decision vector: {decision_vector}")
-        f = C_b @ Xb
-        f *= 10 ** 3
-        f = int(f)
-        f = float(f) / 10 ** 3
-        print(f"Objective function value: {f}")
+            print(f"Basic variables' coefficients: {C_b}")
+            print(f"Basic variable numbers: {basic_var_nums}")
+            print(f"Basic variable values: {Xb}")
+            print(f"Non-basic variable numbers: {non_basic_var_nums}")
+            print(f"Decision vector: {decision_vector}")
+            f = C_b @ Xb
+            f *= 10 ** 3
+            f = int(f)
+            f = float(f) / 10 ** 3
+            print(f"Objective function value: {f}")
+        else:
+            print("\033[31mSimplex method is not applicable!\n\n")
 
         print()
         print()
 
-        print("Here are the values from interior point algorithm again (when alpha = 0.5):")
+        print("\033[0mHere are the values from interior point algorithm again (when alpha = 0.5):")
         print(f"Last iteration solution:\n{solution_1}")
         print(f"Optimal value of objective function: {opt_1}\n")
         print("Here are the values from interior point algorithm again (when alpha = 0.9):")
         print(f"Last iteration solution:\n {solution_2}")
         print(f"Optimal value of objective function: {opt_2}\n")
     except Exception as e:
-        print("The method is not applicable!")
+        print(f"The method is not applicable! {e}")
 
 
 '''
@@ -257,7 +294,7 @@ TEST INPUT COPY:
 2 3 0 1 0
 3 1 0 0 1
 18 42 24
-0.00001
+0.0001
 1 1 15 37 20
 '''
 
